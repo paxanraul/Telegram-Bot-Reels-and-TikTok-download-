@@ -124,6 +124,12 @@ async def send_greeting(message: Message, lang: str) -> None:
 def get_lang(message: Message) -> str:
     return user_lang.get(message.from_user.id, "Russian")
 
+async def clear_wait(wait_msg: Message) -> None:
+    try:
+        await wait_msg.delete()
+    except Exception:
+        pass
+
 
 def ensure_instagram_login(L: instaloader.Instaloader) -> bool:
     if not IG_USERNAME or not IG_SESSIONFILE:
@@ -182,6 +188,7 @@ async def handle_link(message: Message):
         try:
             snaps = snaptik(url)
             if not snaps:
+                await clear_wait(wait_msg)
                 await message.reply(TEXTS["tiktok_download_fail"][lang])
                 return
 
@@ -223,6 +230,7 @@ async def handle_link(message: Message):
                 os.remove(audio_path)
 
         except Exception:
+            await clear_wait(wait_msg)
             await message.reply(TEXTS["tiktok_download_fail"][lang])
 
     elif 'instagram.com/reel' in url or 'instagram.com/p/' in url:
@@ -299,11 +307,13 @@ async def handle_link(message: Message):
                     pass
                 shutil.rmtree(target_dir, ignore_errors=True)
             else:
+                await clear_wait(wait_msg)
                 await message.reply(TEXTS["instagram_download_fail"][lang])
 
         except Exception as e:
             print(f"[Instagram download error] {type(e).__name__}: {e}")
             print(traceback.format_exc())
+            await clear_wait(wait_msg)
             await message.reply(TEXTS["instagram_download_fail"][lang])
             if os.path.exists('ig_temp'):
                 shutil.rmtree('ig_temp', ignore_errors=True)
@@ -312,7 +322,7 @@ async def handle_link(message: Message):
         wait_msg = await message.reply("⏳")
         try:
             uid = uuid.uuid4().hex
-            video_path = f"shorts_{uid}.mp4"
+            output_template = f"shorts_{uid}.%(ext)s"
             audio_path = f"shorts_{uid}.mp3"
 
             subprocess.run(
@@ -320,8 +330,10 @@ async def handle_link(message: Message):
                     "yt-dlp",
                     "-f",
                     "bv*+ba/b",
+                    "--merge-output-format",
+                    "mp4",
                     "-o",
-                    video_path,
+                    output_template,
                     url,
                 ],
                 check=True,
@@ -329,9 +341,16 @@ async def handle_link(message: Message):
                 stderr=subprocess.DEVNULL,
             )
 
-            if os.path.exists(video_path):
+            video_path = None
+            for file in os.listdir("."):
+                if file.startswith(f"shorts_{uid}.") and file.lower().endswith((".mp4", ".mkv", ".webm")):
+                    video_path = file
+                    break
+
+            if video_path and os.path.exists(video_path):
                 await message.reply_video(FSInputFile(video_path))
             else:
+                await clear_wait(wait_msg)
                 await message.reply(TEXTS["youtube_download_fail"][lang])
                 return
 
@@ -362,12 +381,13 @@ async def handle_link(message: Message):
             except Exception:
                 pass
 
-            if os.path.exists(video_path):
+            if video_path and os.path.exists(video_path):
                 os.remove(video_path)
             if os.path.exists(audio_path):
                 os.remove(audio_path)
 
         except Exception:
+            await clear_wait(wait_msg)
             await message.reply(TEXTS["youtube_download_fail"][lang])
 
     else:
