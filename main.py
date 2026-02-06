@@ -61,8 +61,8 @@ def save_languages() -> None:
 TEXTS = {
     "prompt_language": "🏳️ Choose a language / Выберите язык:",
     "greeting": {
-        "English": "Hi, {name} !🙂 Send me a TikTok or Instagram (Reels) link, and I'll send you the video without a watermark.",
-        "Russian": "Привет, {   name} !🙂 Отправь мне ссылку на видео из TikTok или Instagram (Reels), и я отправлю тебе видео без водяного знака.",
+        "English": "Hi, {name} !🙂 Send me a TikTok, Instagram (Reels) or YouTube (Shorts) link, and I'll send you the video without a watermark.",
+        "Russian": "Привет, {   name} !🙂 Отправь мне ссылку на видео из TikTok, Instagram (Reels) или YouTube (Shorts) видео, и я отправлю тебе видео без водяного знака.",
     },
     "tiktok_download_fail": {
         "English": "😔 Failed to download the video from TikTok. Try another link or later.",
