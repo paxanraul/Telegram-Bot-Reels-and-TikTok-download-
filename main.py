@@ -88,40 +88,40 @@ def save_user_ids() -> None:
 TEXTS = {
     "prompt_language": "🏳️ Choose a language / Выберите язык:",
     "greeting": {
-        "English": "Hi, {name} !🙂 Send me a TikTok, Instagram (Reels) or YouTube (Shorts) link, and I'll send you the video without a watermark.",
-        "Russian": "Привет, {   name} !🙂 Отправь мне ссылку на видео из TikTok, Instagram (Reels) или YouTube (Shorts) видео, и я отправлю тебе видео без водяного знака.",
+        "English": "Hi, {name}!🙂 Send me a TikTok, Instagram (Reels) or YouTube (Shorts) link, and I'll send you the video without a watermark.",
+        "Русский": "Привет, {name}!🙂 Отправь мне ссылку на видео из TikTok, Instagram (Reels) или YouTube (Shorts), и я отправлю тебе видео без водяного знака.",
     },
     "tiktok_download_fail": {
         "English": "😔 Failed to download the video from TikTok. Try another link or later.",
-        "Russian": "😔 Не удалось скачать видео из TikTok. Попробуй другую ссылку или позже.",
+        "Русский": "😔 Не удалось скачать видео из TikTok. Попробуй другую ссылку или позже.",
     },
     "tiktok_audio_fail": {
         "English": "😔 Failed to extract audio from TikTok. Try another link or later.",
-        "Russian": "😔 Не удалось извлечь аудио из TikTok. Попробуй другую ссылку или позже.",
+        "Русский": "😔 Не удалось извлечь аудио из TikTok. Попробуй другую ссылку или позже.",
     },
     "instagram_download_fail": {
         "English": "😔 Failed to download the video from Instagram. Try another link or later.",
-        "Russian": "😔 Не удалось скачать видео из Instagram. Попробуй другую ссылку или позже.",
+        "Русский": "😔 Не удалось скачать видео из Instagram. Попробуй другую ссылку или позже.",
     },
     "instagram_audio_fail": {
         "English": "😔 Failed to extract audio from Instagram. Try another link or later.",
-        "Russian": "😔 Не удалось извлечь аудио из Instagram. Попробуй другую ссылку или позже.",
+        "Русский": "😔 Не удалось извлечь аудио из Instagram. Попробуй другую ссылку или позже.",
     },
     "youtube_download_fail": {
         "English": "😔 Failed to download the video from YouTube Shorts. Try another link or later.",
-        "Russian": "😔 Не удалось скачать видео из YouTube Shorts. Попробуй другую ссылку или позже.",
+        "Русский": "😔 Не удалось скачать видео из YouTube Shorts. Попробуй другую ссылку или позже.",
     },
     "youtube_audio_fail": {
         "English": "😔 Failed to extract audio from YouTube Shorts. Try another link or later.",
-        "Russian": "😔 Не удалось извлечь аудио из YouTube Shorts. Попробуй другую ссылку или позже.",
+        "Русский": "😔 Не удалось извлечь аудио из YouTube Shorts. Попробуй другую ссылку или позже.",
     },
     "bad_link": {
         "English": "This doesn't look like a TikTok, Instagram Reels, or YouTube Shorts link.\nPlease send a correct link.",
-        "Russian": "Ссылка не похожа на TikTok, Instagram Reels или YouTube Shorts.\nПришли правильную ссылку, пожалуйста.",
+        "Русский": "Ссылка не похожа на TikTok, Instagram Reels или YouTube Shorts.\nПришли правильную ссылку, пожалуйста.",
     },
     "ready": {
         "English": "Done✅",
-        "Russian": "Готово✅",
+        "Русский": "Готово✅",
     },
 }
 
@@ -129,7 +129,7 @@ TEXTS = {
 def language_keyboard() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="English 🇬🇧"), KeyboardButton(text="Russian 🇷🇺")],
+            [KeyboardButton(text="English 🇬🇧"), KeyboardButton(text="Русский 🇷🇺")],
         ],
         resize_keyboard=True,
         one_time_keyboard=True,
@@ -149,7 +149,7 @@ async def send_greeting(message: Message, lang: str) -> None:
 
 
 def get_lang(message: Message) -> str:
-    return user_lang.get(message.from_user.id, "Russian")
+    return user_lang.get(message.from_user.id, "Русский")
 
 async def clear_wait(wait_msg: Message) -> None:
     try:
@@ -216,12 +216,12 @@ async def handle_link(message: Message):
     if message.text and message.text.strip().startswith("/"):
         return
 
-    if message.text and message.text.strip() in {"English 🇬🇧", "Russian 🇷🇺"}:
+    if message.text and message.text.strip() in {"English 🇬🇧", "Русский 🇷🇺"}:
         chosen = message.text.strip()
         if chosen == "English 🇬🇧":
             user_lang[message.from_user.id] = "English"
         else:
-            user_lang[message.from_user.id] = "Russian"
+            user_lang[message.from_user.id] = "Русский"
         save_languages()
         await send_greeting(message, user_lang[message.from_user.id])
         return
