@@ -62,7 +62,7 @@ TEXTS = {
     "prompt_language": "🏳️ Choose a language / Выберите язык:",
     "greeting": {
         "English": "Hi, {name} !🙂 Send me a TikTok or Instagram (Reels) link, and I'll send you the video without a watermark.",
-        "Russian": "Привет, {name} !🙂 Отправь мне ссылку на видео из TikTok или Instagram (Reels), и я отправлю тебе видео без водяного знака.",
+        "Russian": "Привет, {   name} !🙂 Отправь мне ссылку на видео из TikTok или Instagram (Reels), и я отправлю тебе видео без водяного знака.",
     },
     "tiktok_download_fail": {
         "English": "😔 Failed to download the video from TikTok. Try another link or later.",
@@ -80,9 +80,17 @@ TEXTS = {
         "English": "😔 Failed to extract audio from Instagram. Try another link or later.",
         "Russian": "😔 Не удалось извлечь аудио из Instagram. Попробуй другую ссылку или позже.",
     },
+    "youtube_download_fail": {
+        "English": "😔 Failed to download the video from YouTube Shorts. Try another link or later.",
+        "Russian": "😔 Не удалось скачать видео из YouTube Shorts. Попробуй другую ссылку или позже.",
+    },
+    "youtube_audio_fail": {
+        "English": "😔 Failed to extract audio from YouTube Shorts. Try another link or later.",
+        "Russian": "😔 Не удалось извлечь аудио из YouTube Shorts. Попробуй другую ссылку или позже.",
+    },
     "bad_link": {
-        "English": "This doesn't look like a TikTok or Instagram Reels link.\nPlease send a correct link.",
-        "Russian": "Ссылка не похожа на TikTok или Instagram Reels.\nПришли правильную ссылку, пожалуйста.",
+        "English": "This doesn't look like a TikTok, Instagram Reels, or YouTube Shorts link.\nPlease send a correct link.",
+        "Russian": "Ссылка не похожа на TikTok, Instagram Reels или YouTube Shorts.\nПришли правильную ссылку, пожалуйста.",
     },
     "ready": {
         "English": "Done✅",
@@ -231,7 +239,7 @@ async def handle_link(message: Message):
 
             L = instaloader.Instaloader(
                 download_pictures=False,
-                download_videos=True,
+                download_videos=True,   
                 download_video_thumbnails=False,
                 download_geotags=False,
                 download_comments=False,
@@ -299,6 +307,68 @@ async def handle_link(message: Message):
             await message.reply(TEXTS["instagram_download_fail"][lang])
             if os.path.exists('ig_temp'):
                 shutil.rmtree('ig_temp', ignore_errors=True)
+
+    elif 'youtube.com/shorts/' in url or 'm.youtube.com/shorts/' in url:
+        wait_msg = await message.reply("⏳")
+        try:
+            uid = uuid.uuid4().hex
+            video_path = f"shorts_{uid}.mp4"
+            audio_path = f"shorts_{uid}.mp3"
+
+            subprocess.run(
+                [
+                    "yt-dlp",
+                    "-f",
+                    "bv*+ba/b",
+                    "-o",
+                    video_path,
+                    url,
+                ],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+
+            if os.path.exists(video_path):
+                await message.reply_video(FSInputFile(video_path))
+            else:
+                await message.reply(TEXTS["youtube_download_fail"][lang])
+                return
+
+            try:
+                subprocess.run(
+                    [
+                        "ffmpeg",
+                        "-y",
+                        "-i",
+                        video_path,
+                        "-vn",
+                        "-acodec",
+                        "libmp3lame",
+                        "-q:a",
+                        "2",
+                        audio_path,
+                    ],
+                    check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                await message.reply_audio(FSInputFile(audio_path))
+            except Exception:
+                await message.reply(TEXTS["youtube_audio_fail"][lang])
+
+            try:
+                await wait_msg.edit_text(TEXTS["ready"][lang])
+            except Exception:
+                pass
+
+            if os.path.exists(video_path):
+                os.remove(video_path)
+            if os.path.exists(audio_path):
+                os.remove(audio_path)
+
+        except Exception:
+            await message.reply(TEXTS["youtube_download_fail"][lang])
 
     else:
         await message.reply(TEXTS["bad_link"][lang])

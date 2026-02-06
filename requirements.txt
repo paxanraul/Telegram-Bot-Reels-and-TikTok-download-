@@ -3,3 +3,4 @@ python-dotenv
 tiktok_downloader
 instaloader
 requests
+yt-dlp
