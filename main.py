@@ -28,11 +28,14 @@ if not BOT_TOKEN:
 IG_USERNAME = os.getenv("IG_USERNAME")
 IG_PASSWORD = os.getenv("IG_PASSWORD")
 IG_SESSIONFILE = os.getenv("IG_SESSIONFILE")
+ADMIN_ID = os.getenv("ADMIN_ID")
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 user_lang = {}
 LANG_STORE = "user_lang.json"
+USER_IDS_STORE = "user_ids.json"
+user_ids = set()
 
 
 def load_languages() -> None:
@@ -56,6 +59,30 @@ def save_languages() -> None:
         data = {str(k): v for k, v in user_lang.items()}
         with open(LANG_STORE, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+
+def load_user_ids() -> None:
+    if not os.path.exists(USER_IDS_STORE):
+        return
+    try:
+        with open(USER_IDS_STORE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, list):
+            for item in data:
+                try:
+                    user_ids.add(int(item))
+                except Exception:
+                    continue
+    except Exception:
+        pass
+
+
+def save_user_ids() -> None:
+    try:
+        with open(USER_IDS_STORE, "w", encoding="utf-8") as f:
+            json.dump(sorted(user_ids), f, ensure_ascii=False, indent=2)
     except Exception:
         pass
 TEXTS = {
@@ -149,6 +176,8 @@ def ensure_instagram_login(L: instaloader.Instaloader) -> bool:
 
 @dp.message(CommandStart())
 async def start(message: Message):
+    user_ids.add(message.from_user.id)
+    save_user_ids()
     if message.from_user.id not in user_lang:
         await prompt_language(message)
         return
@@ -157,11 +186,33 @@ async def start(message: Message):
 
 @dp.message(Command("lang"))
 async def change_language(message: Message):
+    user_ids.add(message.from_user.id)
+    save_user_ids()
     await prompt_language(message)
+
+
+@dp.message(Command("broadcast"))
+async def broadcast(message: Message):
+    if not ADMIN_ID or str(message.from_user.id) != str(ADMIN_ID):
+        return
+    text = message.text.partition(" ")[2].strip()
+    if not text:
+        await message.reply("Usage: /broadcast your message")
+        return
+    sent = 0
+    for uid in list(user_ids):
+        try:
+            await bot.send_message(uid, text)
+            sent += 1
+        except Exception:
+            pass
+    await message.reply(f"Broadcast sent to {sent} users.")
 
 
 @dp.message()
 async def handle_link(message: Message):
+    user_ids.add(message.from_user.id)
+    save_user_ids()
     if message.text and message.text.strip().startswith("/"):
         return
 
@@ -416,6 +467,7 @@ async def handle_link(message: Message):
 
 async def main():
     load_languages()
+    load_user_ids()
     await dp.start_polling(bot, skip_updates=True)
 
 
