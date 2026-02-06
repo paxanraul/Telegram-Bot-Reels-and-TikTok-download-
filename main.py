@@ -325,21 +325,35 @@ async def handle_link(message: Message):
             output_template = f"shorts_{uid}.%(ext)s"
             audio_path = f"shorts_{uid}.mp3"
 
-            subprocess.run(
-                [
-                    "yt-dlp",
-                    "-f",
-                    "bv*+ba/b",
-                    "--merge-output-format",
-                    "mp4",
-                    "-o",
-                    output_template,
-                    url,
-                ],
-                check=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
+            try:
+                print(f"[YouTube Shorts] Start download: {url}")
+                subprocess.run(
+                    [
+                        "yt-dlp",
+                        "-f",
+                        "bv*+ba/b",
+                        "--merge-output-format",
+                        "mp4",
+                        "-o",
+                        output_template,
+                        url,
+                    ],
+                    check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=180,
+                )
+                print("[YouTube Shorts] Download finished")
+            except subprocess.TimeoutExpired:
+                print("[YouTube Shorts] Download timeout")
+                await clear_wait(wait_msg)
+                await message.reply(TEXTS["youtube_download_fail"][lang])
+                return
+            except Exception as e:
+                print(f"[YouTube Shorts] Download error: {e}")
+                await clear_wait(wait_msg)
+                await message.reply(TEXTS["youtube_download_fail"][lang])
+                return
 
             video_path = None
             for file in os.listdir("."):
@@ -348,13 +362,16 @@ async def handle_link(message: Message):
                     break
 
             if video_path and os.path.exists(video_path):
+                print(f"[YouTube Shorts] Video found: {video_path}")
                 await message.reply_video(FSInputFile(video_path))
             else:
+                print("[YouTube Shorts] Video not found after download")
                 await clear_wait(wait_msg)
                 await message.reply(TEXTS["youtube_download_fail"][lang])
                 return
 
             try:
+                print("[YouTube Shorts] Start audio extract")
                 subprocess.run(
                     [
                         "ffmpeg",
@@ -371,9 +388,12 @@ async def handle_link(message: Message):
                     check=True,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
+                    timeout=120,
                 )
+                print(f"[YouTube Shorts] Audio ready: {audio_path}")
                 await message.reply_audio(FSInputFile(audio_path))
             except Exception:
+                print("[YouTube Shorts] Audio extract failed")
                 await message.reply(TEXTS["youtube_audio_fail"][lang])
 
             try:
