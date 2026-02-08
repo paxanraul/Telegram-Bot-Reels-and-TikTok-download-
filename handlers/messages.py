@@ -14,7 +14,12 @@ router = Router()
 
 @router.message()
 async def handle_link(message: Message) -> None:
-    touch_user(message.from_user.id)
+    touch_user(
+        message.from_user.id,
+        username=message.from_user.username,
+        first_name=message.from_user.first_name,
+        last_name=message.from_user.last_name,
+    )
 
     if message.text and message.text.strip().startswith("/"):
         return

@@ -5,14 +5,19 @@ from aiogram.types import Message
 from config import ADMIN_ID
 from handlers.ui import prompt_language, send_greeting
 from storage.language_store import has_lang, get_lang
-from storage.users_store import touch_user, user_ids
+from storage.users_store import touch_user, user_ids, user_meta
 
 router = Router()
 
 
 @router.message(CommandStart())
 async def start(message: Message) -> None:
-    touch_user(message.from_user.id)
+    touch_user(
+        message.from_user.id,
+        username=message.from_user.username,
+        first_name=message.from_user.first_name,
+        last_name=message.from_user.last_name,
+    )
     if not has_lang(message.from_user.id):
         await prompt_language(message)
         return
@@ -21,7 +26,12 @@ async def start(message: Message) -> None:
 
 @router.message(Command("lang"))
 async def change_language(message: Message) -> None:
-    touch_user(message.from_user.id)
+    touch_user(
+        message.from_user.id,
+        username=message.from_user.username,
+        first_name=message.from_user.first_name,
+        last_name=message.from_user.last_name,
+    )
     await prompt_language(message)
 
 
@@ -48,4 +58,13 @@ async def stats(message: Message) -> None:
     if not ADMIN_ID or str(message.from_user.id) != str(ADMIN_ID):
         return
     ids = sorted(list(user_ids))
-    await message.reply(f"Users: {len(ids)}\nIDs: {ids}")
+    lines = [f"Users: {len(ids)}"]
+    for uid in ids:
+        meta = user_meta.get(uid, {})
+        username = meta.get("username")
+        first_name = meta.get("first_name")
+        last_name = meta.get("last_name")
+        label = " ".join([name for name in [first_name, last_name] if name]) or "-"
+        uname = f"@{username}" if username else "-"
+        lines.append(f"{uid} | {uname} | {label}")
+    await message.reply("\n".join(lines))
