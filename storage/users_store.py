@@ -1,7 +1,9 @@
 import json
 import os
 
-USER_IDS_STORE = "user_ids.json"
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+USER_IDS_STORE = os.path.join(BASE_DIR, "user_ids.json")
 user_ids = set()
 
 

@@ -1,7 +1,9 @@
 import json
 import os
 
-LANG_STORE = "user_lang.json"
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+LANG_STORE = os.path.join(BASE_DIR, "user_lang.json")
 user_lang = {}
 
 
