@@ -41,3 +41,11 @@ async def broadcast(message: Message) -> None:
         except Exception:
             pass
     await message.reply(f"Broadcast sent to {sent} users.")
+
+
+@router.message(Command("stats"))
+async def stats(message: Message) -> None:
+    if not ADMIN_ID or str(message.from_user.id) != str(ADMIN_ID):
+        return
+    ids = sorted(list(user_ids))
+    await message.reply(f"Users: {len(ids)}\nIDs: {ids}")
