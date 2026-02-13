@@ -1,5 +1,5 @@
-from aiogram import Router
-from aiogram.types import Message
+from aiogram import Router, F
+from aiogram.types import Message, CallbackQuery
 
 from handlers.media.instagram import handle_instagram
 from handlers.media.shorts import handle_shorts
@@ -10,6 +10,29 @@ from storage.users_store import touch_user
 from texts import TEXTS
 
 router = Router()
+
+
+@router.callback_query(F.data.in_({"lang_en", "lang_ru"}))
+async def choose_lang(callback: CallbackQuery) -> None:
+    touch_user(
+        callback.from_user.id,
+        username=callback.from_user.username,
+        first_name=callback.from_user.first_name,
+        last_name=callback.from_user.last_name,
+    )
+
+    lang = "English" if callback.data == "lang_en" else "Русский"
+    set_lang(callback.from_user.id, lang)
+
+    if callback.message:
+        try:
+            await callback.message.delete()
+        except Exception:
+            pass
+        text = TEXTS["greeting"][lang].format(name=callback.from_user.first_name)
+        await callback.message.answer(text)
+
+    await callback.answer()
 
 
 @router.message()
@@ -24,6 +47,7 @@ async def handle_link(message: Message) -> None:
     if message.text and message.text.strip().startswith("/"):
         return
 
+    # Backward compatibility if user types language text manually
     if message.text and message.text.strip() in {"English 🇬🇧", "Русский 🇷🇺"}:
         chosen = message.text.strip()
         if chosen == "English 🇬🇧":
