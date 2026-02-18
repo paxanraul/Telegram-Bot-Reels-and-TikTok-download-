@@ -1,20 +1,20 @@
 from aiogram import Router
 from aiogram.filters import Command, CommandStart
-from aiogram.types import Message
+from aiogram.types import Message # Импорты из aiogram
 
-from config import ADMIN_ID
-from handlers.ui import prompt_language, send_greeting
-from storage.language_store import has_lang, get_lang
-from storage.users_store import touch_user, user_ids, user_meta
+from config import ADMIN_ID #import from .env
+from handlers.ui import prompt_language, send_greeting # Выбор языка, приветствие
+from storage.language_store import has_lang, get_lang # Данные выбора языка
+from storage.users_store import touch_user, user_ids, user_meta # Данные пользовалеля
 
-router = Router()
+router = Router() # Для команд
 
 
-@router.message(CommandStart())
+@router.message(CommandStart()) # Команда /start
 async def start(message: Message) -> None:
     touch_user(
         message.from_user.id,
-        username=message.from_user.username,
+        username=message.from_user.username, 
         first_name=message.from_user.first_name,
         last_name=message.from_user.last_name,
     )
@@ -24,7 +24,7 @@ async def start(message: Message) -> None:
     await send_greeting(message, get_lang(message.from_user.id))
 
 
-@router.message(Command("lang"))
+@router.message(Command("lang")) # Команда /lang
 async def change_language(message: Message) -> None:
     touch_user(
         message.from_user.id,
@@ -35,7 +35,7 @@ async def change_language(message: Message) -> None:
     await prompt_language(message)
 
 
-@router.message(Command("broadcast"))
+@router.message(Command("broadcast")) # Админский /broadcast для объявлений
 async def broadcast(message: Message) -> None:
     if not ADMIN_ID or str(message.from_user.id) != str(ADMIN_ID):
         return
@@ -53,7 +53,7 @@ async def broadcast(message: Message) -> None:
     await message.reply(f"Broadcast sent to {sent} users.")
 
 
-@router.message(Command("stats"))
+@router.message(Command("stats")) #Админский /stats для статистики пользователей
 async def stats(message: Message) -> None:
     if not ADMIN_ID or str(message.from_user.id) != str(ADMIN_ID):
         return
