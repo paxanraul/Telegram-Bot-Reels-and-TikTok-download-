@@ -33,9 +33,9 @@ def normalize_video_for_telegram(
             "-y",
             "-i",
             input_path,
-            # Force square pixels so Telegram does not stretch videos
+            # Render square pixels into the actual frame and strip rotation quirks.
             "-vf",
-            "scale=trunc(iw*sar/2)*2:trunc(ih/2)*2,setsar=1",
+            "scale=trunc(iw*sar/2)*2:trunc(ih/2)*2,setsar=1,format=yuv420p",
             "-c:v",
             "libx264",
             "-preset",
@@ -44,6 +44,8 @@ def normalize_video_for_telegram(
             "18",
             "-c:a",
             "copy",
+            "-metadata:s:v:0",
+            "rotate=0",
             "-movflags",
             "+faststart",
             output_path,
@@ -53,3 +55,31 @@ def normalize_video_for_telegram(
         stderr=subprocess.DEVNULL,
         timeout=timeout,
     )
+
+
+def get_video_dimensions(video_path: str) -> tuple[int | None, int | None]:
+    try:
+        result = subprocess.run(
+            [
+                "ffprobe",
+                "-v",
+                "error",
+                "-select_streams",
+                "v:0",
+                "-show_entries",
+                "stream=width,height",
+                "-of",
+                "csv=p=0:s=x",
+                video_path,
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        raw = result.stdout.strip()
+        if not raw or "x" not in raw:
+            return None, None
+        width, height = raw.split("x", 1)
+        return int(width), int(height)
+    except Exception:
+        return None, None

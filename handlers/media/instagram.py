@@ -8,7 +8,11 @@ from aiogram.types import Message, FSInputFile
 from config import IG_USERNAME, IG_SESSIONFILE
 from handlers.ui import clear_wait
 from services.instagram import download_instagram_video
-from services.media_utils import extract_audio, normalize_video_for_telegram
+from services.media_utils import (
+    extract_audio,
+    get_video_dimensions,
+    normalize_video_for_telegram,
+)
 from texts import TEXTS
 
 
@@ -25,7 +29,13 @@ async def handle_instagram(message: Message, url: str, lang: str) -> None:
         except Exception:
             send_video_path = video_path
 
-        await message.reply_video(FSInputFile(send_video_path))
+        width, height = get_video_dimensions(send_video_path)
+        await message.reply_video(
+            FSInputFile(send_video_path),
+            width=width,
+            height=height,
+            supports_streaming=True,
+        )
 
         audio_path = os.path.join(target_dir, f"audio_{uuid.uuid4().hex}.mp3")
         try:
