@@ -8,20 +8,28 @@ from aiogram.types import Message, FSInputFile
 from config import IG_USERNAME, IG_SESSIONFILE
 from handlers.ui import clear_wait
 from services.instagram import download_instagram_video
-from services.media_utils import extract_audio
+from services.media_utils import extract_audio, normalize_video_for_telegram
 from texts import TEXTS
 
 
 async def handle_instagram(message: Message, url: str, lang: str) -> None:
     wait_msg = await message.reply("⏳")
     target_dir = None
+    normalized_video_path = None
     try:
         video_path, target_dir = download_instagram_video(url, IG_USERNAME, IG_SESSIONFILE)
-        await message.reply_video(FSInputFile(video_path))
+        normalized_video_path = os.path.join(target_dir, f"fixed_{uuid.uuid4().hex}.mp4")
+        try:
+            normalize_video_for_telegram(video_path, normalized_video_path, timeout=180)
+            send_video_path = normalized_video_path
+        except Exception:
+            send_video_path = video_path
+
+        await message.reply_video(FSInputFile(send_video_path))
 
         audio_path = os.path.join(target_dir, f"audio_{uuid.uuid4().hex}.mp3")
         try:
-            extract_audio(video_path, audio_path)
+            extract_audio(send_video_path, audio_path)
             await message.reply_audio(FSInputFile(audio_path))
         except Exception:
             await message.reply(TEXTS["instagram_audio_fail"][lang])
