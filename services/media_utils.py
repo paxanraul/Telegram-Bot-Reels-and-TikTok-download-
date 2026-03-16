@@ -22,6 +22,35 @@ def extract_audio(video_path: str, audio_path: str, timeout: int | None = None) 
     )
 
 
+def should_normalize_video(video_path: str) -> bool:
+    try:
+        result = subprocess.run(
+            [
+                "ffprobe",
+                "-v",
+                "error",
+                "-select_streams",
+                "v:0",
+                "-show_entries",
+                "stream=sample_aspect_ratio:stream_side_data=rotation",
+                "-of",
+                "default=noprint_wrappers=1:nokey=0",
+                video_path,
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        info = result.stdout
+        if "sample_aspect_ratio=1:1" not in info and "sample_aspect_ratio=N/A" not in info:
+            return True
+        if "rotation=" in info and "rotation=0" not in info:
+            return True
+        return False
+    except Exception:
+        return False
+
+
 def normalize_video_for_telegram(
     input_path: str,
     output_path: str,
