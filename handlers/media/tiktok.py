@@ -4,7 +4,11 @@ import uuid
 from aiogram.types import Message, FSInputFile
 
 from handlers.ui import clear_wait
-from services.media_utils import extract_audio, normalize_video_for_telegram
+from services.media_utils import (
+    extract_audio,
+    normalize_video_for_telegram,
+    should_normalize_video,
+)
 from services.tiktok import download_tiktok_video
 from texts import TEXTS
 
@@ -20,11 +24,13 @@ async def handle_tiktok(message: Message, url: str, lang: str) -> None:
 
         normalized_video_path = f"tiktok_fixed_{uuid.uuid4().hex}.mp4"
         audio_path = f"tiktok_{uuid.uuid4().hex}.mp3"
-        try:
-            normalize_video_for_telegram(video_path, normalized_video_path, timeout=180)
-            send_video_path = normalized_video_path
-        except Exception:
-            send_video_path = video_path
+        send_video_path = video_path
+        if should_normalize_video(video_path):
+            try:
+                normalize_video_for_telegram(video_path, normalized_video_path, timeout=180)
+                send_video_path = normalized_video_path
+            except Exception:
+                send_video_path = video_path
 
         await message.reply_video(FSInputFile(send_video_path))
         try:

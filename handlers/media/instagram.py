@@ -12,6 +12,7 @@ from services.media_utils import (
     extract_audio,
     get_video_dimensions,
     normalize_video_for_telegram,
+    should_normalize_video,
 )
 from texts import TEXTS
 
@@ -23,11 +24,13 @@ async def handle_instagram(message: Message, url: str, lang: str) -> None:
     try:
         video_path, target_dir = download_instagram_video(url, IG_USERNAME, IG_SESSIONFILE)
         normalized_video_path = os.path.join(target_dir, f"fixed_{uuid.uuid4().hex}.mp4")
-        try:
-            normalize_video_for_telegram(video_path, normalized_video_path, timeout=180)
-            send_video_path = normalized_video_path
-        except Exception:
-            send_video_path = video_path
+        send_video_path = video_path
+        if should_normalize_video(video_path):
+            try:
+                normalize_video_for_telegram(video_path, normalized_video_path, timeout=180)
+                send_video_path = normalized_video_path
+            except Exception:
+                send_video_path = video_path
 
         width, height = get_video_dimensions(send_video_path)
         await message.reply_video(

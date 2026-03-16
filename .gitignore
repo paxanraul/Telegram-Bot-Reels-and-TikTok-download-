@@ -4,3 +4,5 @@ __pycache__/
 *.pyc
 user_lang.json
 test.py
+user_ids.json
+users_meta.json
