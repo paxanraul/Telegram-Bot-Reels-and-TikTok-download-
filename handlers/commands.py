@@ -2,7 +2,7 @@ from aiogram import Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message # Импорты из aiogram
 
-from config import ADMIN_ID #import from .env
+from config import is_admin #import from .env
 from handlers.ui import prompt_language, send_greeting # Выбор языка, приветствие
 from storage.language_store import has_lang, get_lang # Данные выбора языка
 from storage.users_store import touch_user, user_ids, user_meta # Данные пользовалеля
@@ -37,7 +37,7 @@ async def change_language(message: Message) -> None:
 
 @router.message(Command("broadcast")) # Админский /broadcast для объявлений
 async def broadcast(message: Message) -> None:
-    if not ADMIN_ID or str(message.from_user.id) != str(ADMIN_ID):
+    if not is_admin(message.from_user.id):
         return
     text = message.text.partition(" ")[2].strip()
     if not text:
@@ -55,7 +55,7 @@ async def broadcast(message: Message) -> None:
 
 @router.message(Command("stats")) #Админский /stats для статистики пользователей
 async def stats(message: Message) -> None:
-    if not ADMIN_ID or str(message.from_user.id) != str(ADMIN_ID):
+    if not is_admin(message.from_user.id):
         return
     ids = sorted(list(user_ids))
     lines = [f"Users: {len(ids)}"]

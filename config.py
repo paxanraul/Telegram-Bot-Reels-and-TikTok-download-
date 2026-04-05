@@ -11,3 +11,14 @@ if not BOT_TOKEN:
 IG_USERNAME = os.getenv("IG_USERNAME")
 IG_SESSIONFILE = os.getenv("IG_SESSIONFILE")
 ADMIN_ID = os.getenv("ADMIN_ID")
+ADMIN_IDS = {
+    value.strip()
+    for value in os.getenv("ADMIN_IDS", "").split(",")
+    if value.strip()
+}
+if ADMIN_ID:
+    ADMIN_IDS.add(str(ADMIN_ID))
+
+
+def is_admin(user_id: int) -> bool:
+    return str(user_id) in ADMIN_IDS

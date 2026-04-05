@@ -17,7 +17,7 @@ from services.media_utils import (
 from texts import TEXTS
 
 
-async def handle_instagram(message: Message, url: str, lang: str) -> None:
+async def handle_instagram(message: Message, url: str, lang: str) -> bool:
     wait_msg = await message.reply("⏳")
     target_dir = None
     normalized_video_path = None
@@ -51,11 +51,13 @@ async def handle_instagram(message: Message, url: str, lang: str) -> None:
             await wait_msg.edit_text(TEXTS["ready"][lang])
         except Exception:
             pass
+        return True
     except Exception as e:
         print(f"[Instagram download error] {type(e).__name__}: {e}")
         print(traceback.format_exc())
         await clear_wait(wait_msg)
         await message.reply(TEXTS["instagram_download_fail"][lang])
+        return False
     finally:
         if target_dir and os.path.exists(target_dir):
             shutil.rmtree(target_dir, ignore_errors=True)

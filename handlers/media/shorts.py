@@ -10,7 +10,7 @@ from services.shorts import download_shorts_video
 from texts import TEXTS
 
 
-async def handle_shorts(message: Message, url: str, lang: str) -> None:
+async def handle_shorts(message: Message, url: str, lang: str) -> bool:
     wait_msg = await message.reply("⏳")
     try:
         try:
@@ -19,12 +19,12 @@ async def handle_shorts(message: Message, url: str, lang: str) -> None:
             print("[YouTube Shorts] Download timeout")
             await clear_wait(wait_msg)
             await message.reply(TEXTS["youtube_download_fail"][lang])
-            return
+            return False
         except Exception as e:
             print(f"[YouTube Shorts] Download error: {e}")
             await clear_wait(wait_msg)
             await message.reply(TEXTS["youtube_download_fail"][lang])
-            return
+            return False
 
         if video_path and os.path.exists(video_path):
             print(f"[YouTube Shorts] Video found: {video_path}")
@@ -33,7 +33,7 @@ async def handle_shorts(message: Message, url: str, lang: str) -> None:
             print("[YouTube Shorts] Video not found after download")
             await clear_wait(wait_msg)
             await message.reply(TEXTS["youtube_download_fail"][lang])
-            return
+            return False
 
         audio_path = f"shorts_{uuid.uuid4().hex}.mp3"
         try:
@@ -54,6 +54,8 @@ async def handle_shorts(message: Message, url: str, lang: str) -> None:
             os.remove(video_path)
         if os.path.exists(audio_path):
             os.remove(audio_path)
+        return True
     except Exception:
         await clear_wait(wait_msg)
         await message.reply(TEXTS["youtube_download_fail"][lang])
+        return False

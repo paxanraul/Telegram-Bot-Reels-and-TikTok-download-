@@ -13,14 +13,14 @@ from services.tiktok import download_tiktok_video
 from texts import TEXTS
 
 
-async def handle_tiktok(message: Message, url: str, lang: str) -> None:
+async def handle_tiktok(message: Message, url: str, lang: str) -> bool:
     wait_msg = await message.reply("⏳")
     try:
         video_path = download_tiktok_video(url)
         if not video_path:
             await clear_wait(wait_msg)
             await message.reply(TEXTS["tiktok_download_fail"][lang])
-            return
+            return False
 
         normalized_video_path = f"tiktok_fixed_{uuid.uuid4().hex}.mp4"
         audio_path = f"tiktok_{uuid.uuid4().hex}.mp3"
@@ -49,6 +49,8 @@ async def handle_tiktok(message: Message, url: str, lang: str) -> None:
             os.remove(normalized_video_path)
         if os.path.exists(audio_path):
             os.remove(audio_path)
+        return True
     except Exception:
         await clear_wait(wait_msg)
         await message.reply(TEXTS["tiktok_download_fail"][lang])
+        return False
